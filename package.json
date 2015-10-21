@@ -23,6 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "async": "0.8.x",
+    "bcrypt": "latest",
     "lodash": "2.4.x",
     "extend": "~1.1.x",
     "moment": "~2.0.x",

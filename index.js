@@ -1,11 +1,12 @@
 /* jshint node:true */
 
 var async = require('async');
+var bcrypt = require('bcrypt');
 var _ = require('lodash');
 var extend = require('extend');
 var snippets = require('apostrophe-snippets');
 var pwgen = require('xkcd-pwgen');
-var passwordHash = require('password-hash');
+//var passwordHash = require('password-hash');
 
 // Creating an instance of the people module is easy:
 // var people = require('apostrophe-people')(options, callback);
@@ -334,10 +335,13 @@ people.People = function(options, callback) {
         },
         confirm: function(callback) {
           // confirm oldPassword matches what's in the DB
-          if (!passwordHash.verify(oldPassword, person.password)) {
-            return callback(__('Old password was incorrect'));
-          }
-          return callback(null);
+          bcrypt.compare(oldPassword, person.password, function(err, isMatch) {
+            return (isMatch) ? callback(null) : callback(__('Old password was incorrect'));
+          })
+          // if (!passwordHash.verify(oldPassword, person.password)) {
+          //   return callback(__('Old password was incorrect'));
+          // }
+          // return callback(null);
         },
         update: function(callback) {
           // save hash of new password in db
