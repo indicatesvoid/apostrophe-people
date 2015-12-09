@@ -345,13 +345,14 @@ people.People = function(options, callback) {
         },
         update: function(callback) {
           // save hash of new password in db
-          var password = self.hashPassword(newPassword);
-          return self._apos.pages.update({ _id: person._id }, { $set: { password: password }, $unset: { $resetPassword: 1 } }, function(err, count) {
-            if (err || (!count)) {
+          self.hashPassword(newPassword, function(hash) {
+            var password = hash;
+            return self._apos.pages.update({ _id: person._id }, { $set: { password: password }, $unset: { $resetPassword: 1 } }, function(err, count) {
+              if (err || (!count)) return callback(null);
               return callback(null);
-            }
-            return callback(null);
+            });
           });
+          
         }
       }, function(err) {
         // res.send error or results
@@ -464,17 +465,20 @@ people.People = function(options, callback) {
           if (req.method !== 'POST') {
             return callback(null);
           }
-          password = self.hashPassword(password);
-          return self._apos.pages.update({ _id: person._id }, { $set: { password: password }, $unset: { $resetPassword: 1 } }, function(err, count) {
-            if (err || (!count)) {
-              // A database error, or they didn't succeed because someone else logged in.
-              // Still not a good idea to disclose much information
-              template = 'resetFail';
+          self.hashPassword(password, function(hash) {
+            password = hash;
+            return self._apos.pages.update({ _id: person._id }, { $set: { password: password }, $unset: { $resetPassword: 1 } }, function(err, count) {
+              if (err || (!count)) {
+                // A database error, or they didn't succeed because someone else logged in.
+                // Still not a good idea to disclose much information
+                template = 'resetFail';
+                return callback(null);
+              }
+              template = 'resetDone';
               return callback(null);
-            }
-            template = 'resetDone';
-            return callback(null);
+            });
           });
+          
         }
       }, function(err) {
         return res.send(self.renderPage(req, template, { message: err, reset: reset }));
@@ -924,7 +928,10 @@ people.People = function(options, callback) {
       if (_password === null) {
         _password = self._apos.generateId();
       }
-      snippet.password = self.hashPassword(_password);
+      self.hashPassword(_password, function(hash) {
+        snippet.password = hash;
+        return callback(null);
+      });
     }
 
     return callback(null);
@@ -1041,8 +1048,10 @@ people.People = function(options, callback) {
   //
   // With a newly generated salt.
 
-  self.hashPassword = function(password) {
-    return self._apos.hashPassword(password);
+  self.hashPassword = function(password, cback) {
+    return self._apos.hashPassword(password, function(hash) {
+      cback(hash);
+    });
   };
 
   var superAddApiCriteria = self.addApiCriteria;
