@@ -934,7 +934,7 @@ people.People = function(options, callback) {
       });
     }
 
-    return callback(null);
+    else return callback(null);
   };
 
   self.beforeTrash = function(req, snippet, trash, callback) {
